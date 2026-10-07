@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SalaryCalc · 工资个税计算器：五险一金明细、累计预扣个税、税前税后互算、年终奖单独计税与并入综合对比，纯前端本地计算。">
+  <title>SalaryCalc · 薪资个税计算器</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23059669'/%3E%3Ctext x='32' y='45' font-size='36' text-anchor='middle' fill='%23fff'%3E%C2%A5%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+
+  <header class="site-header">
+    <div class="header-inner wrap">
+      <a class="brand" href="./">💰 SalaryCalc <span class="brand-sub">薪资个税计算器</span></a>
+      <button id="themeToggle" class="icon-btn" title="切换深浅色" aria-label="切换深浅色模式">🌙</button>
+    </div>
+  </header>
+
+  <main id="main" class="wrap">
+    <!-- ============ 输入 ============ -->
+    <section class="card" aria-labelledby="inputTitle">
+      <h2 id="inputTitle">输入</h2>
+      <div class="seg-row">
+        <span class="seg-label">计算方向</span>
+        <div class="seg" role="tablist" aria-label="计算方向">
+          <button class="seg-btn" id="modeGross" aria-pressed="true">税前 → 税后</button>
+          <button class="seg-btn" id="modeNet" aria-pressed="false">税后 → 税前</button>
+        </div>
+      </div>
+
+      <div class="grid-inputs">
+        <label class="field">
+          <span id="salaryLabel">税前月薪（元）</span>
+          <input type="number" id="salary" min="0" step="100" placeholder="例如 15000" inputmode="decimal">
+        </label>
+        <label class="field">
+          <span>公积金比例（%）</span>
+          <input type="number" id="hfRate" min="1" max="15" step="0.5" value="12" inputmode="decimal">
+        </label>
+        <label class="field">
+          <span>社保公积金缴费基数（元）</span>
+          <input type="number" id="base" min="0" step="100" placeholder="留空 = 按月薪" inputmode="decimal">
+        </label>
+        <label class="field half">
+          <span>基数下限（元）</span>
+          <input type="number" id="baseMin" min="0" step="100" placeholder="留空 = 不限制" inputmode="decimal">
+        </label>
+        <label class="field half">
+          <span>基数上限（元）</span>
+          <input type="number" id="baseMax" min="0" step="100" placeholder="留空 = 不限制" inputmode="decimal">
+        </label>
+        <label class="field">
+          <span>专项附加扣除（每月合计，元）</span>
+          <input type="number" id="extra" min="0" step="100" placeholder="如租房 1500 / 赡养 3000" inputmode="decimal">
+        </label>
+        <label class="field">
+          <span>年终奖（元）</span>
+          <input type="number" id="bonus" min="0" step="1000" placeholder="选填" inputmode="decimal">
+        </label>
+      </div>
+
+      <details class="adv">
+        <summary>高级：调整五险一金比例</summary>
+        <div class="grid-inputs">
+          <label class="field q"><span>个人 养老 %</span><input type="number" id="pPension" value="8" step="0.5" min="0"></label>
+          <label class="field q"><span>个人 医疗 %</span><input type="number" id="pMedical" value="2" step="0.5" min="0"></label>
+          <label class="field q"><span>个人 失业 %</span><input type="number" id="pUnemploy" value="0.5" step="0.1" min="0"></label>
+          <label class="field q"><span>单位 养老 %</span><input type="number" id="ePension" value="16" step="0.5" min="0"></label>
+          <label class="field q"><span>单位 医疗 %</span><input type="number" id="eMedical" value="9" step="0.5" min="0"></label>
+          <label class="field q"><span>单位 失业 %</span><input type="number" id="eUnemploy" value="0.5" step="0.1" min="0"></label>
+          <label class="field q"><span>单位 工伤 %</span><input type="number" id="eInjury" value="0.4" step="0.1" min="0"></label>
+        </div>
+      </details>
+      <p class="hint">默认比例为多数城市的常见值，实际以当地社保局口径为准，可按需修改。</p>
+    </section>
+
+    <!-- ============ 结果 ============ -->
+    <section id="results" class="results" aria-live="polite">
+      <div class="card hero-card">
+        <p class="hero-label" id="heroLabel">税后月薪</p>
+        <p class="hero-num"><b id="heroNum">—</b><span class="hero-unit">元 / 月</span></p>
+        <div id="heroSub" class="hero-sub"></div>
+      </div>
+
+      <div class="card">
+        <h2>五险一金（个人）</h2>
+        <table class="kv" id="insuranceTable">
+          <tbody></tbody>
+          <tfoot></tfoot>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>个税（按年度综合所得）</h2>
+        <table class="kv" id="taxTable">
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="card" id="bonusCard">
+        <h2>年终奖：两种计税对比 <span class="tag">单独计税政策延至 2027 年底</span></h2>
+        <div class="bonus-grid">
+          <div class="bonus-box" id="boxSeparate">
+            <p class="bonus-t">单独计税</p>
+            <p class="bonus-n" id="bnSeparate">—</p>
+            <p class="bonus-s" id="bsSeparate">奖金个税 —</p>
+          </div>
+          <div class="bonus-box" id="boxMerged">
+            <p class="bonus-t">并入综合所得</p>
+            <p class="bonus-n" id="bnMerged">—</p>
+            <p class="bonus-s" id="bsMerged">多缴个税 —</p>
+          </div>
+        </div>
+        <p class="bonus-adv" id="bonusAdv"></p>
+      </div>
+
+      <div class="card">
+        <h2>全年总览</h2>
+        <table class="kv" id="yearTable">
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <details class="card adv-card">
+        <summary>单位缴纳部分（企业用工成本视角）</summary>
+        <table class="kv" id="companyTable">
+          <tbody></tbody>
+          <tfoot></tfoot>
+        </table>
+      </details>
+
+      <details class="card adv-card">
+        <summary>参考：个人所得税税率表</summary>
+        <h3 class="tbl-t">综合所得（年度）</h3>
+        <table class="rate" id="rateAnnual"></table>
+        <h3 class="tbl-t">按月换算（年终奖单独计税用）</h3>
+        <table class="rate" id="rateMonthly"></table>
+      </details>
+    </section>
+
+    <p class="disclaimer">计算结果为简化模型（个税按年度综合所得平均到月），仅供估算参考；各地社保基数上下限、比例与政策不同，请以当地实际口径为准。</p>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-grid">
+      <p>纯前端计算 · 数据不保存不上传 · 刷新即清空</p>
+      <p>
+        <a href="https://github.com/huqinyuan923-hue/salarycalc" target="_blank" rel="noopener noreferrer">GitHub 开源</a>
+        · <a href="https://toolbox.adcakeyuan.top" target="_blank" rel="noopener noreferrer">Toolbox 工具箱</a>
+        · <a href="https://adcakeyuan.top" target="_blank" rel="noopener noreferrer">我的博客</a>
+      </p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
