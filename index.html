@@ -7,8 +7,26 @@
   <title>SalaryCalc · 薪资个税计算器</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23059669'/%3E%3Ctext x='32' y='45' font-size='36' text-anchor='middle' fill='%23fff'%3E%C2%A5%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
+  <style>
+    /* 进站动画：薪资结算（每会话一次） */
+    #boot{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#0c1322;font-family:system-ui,sans-serif;animation:scOut .5s ease 1.9s forwards}
+    #boot .s-logo{color:#34d399;font-size:clamp(24px,5vw,42px);font-weight:800;animation:scIn .5s ease both}
+    #boot .s-num{font-family:ui-monospace,Consolas,monospace;font-size:clamp(38px,7vw,64px);font-weight:800;color:#f8fafc;text-shadow:0 0 24px rgba(52,211,153,.5);opacity:0;animation:scIn .4s ease .4s both}
+    #boot .s-num .yen{color:#34d399}
+    #boot .s-sub{color:#94a3b8;font-size:13px;letter-spacing:.12em;opacity:0;animation:scIn .35s ease .9s both}
+    @keyframes scIn{from{opacity:0;transform:translateY(10px)}}
+    @keyframes scOut{to{opacity:0;visibility:hidden;transform:scale(1.03)}}
+    @media (prefers-reduced-motion:reduce){#boot{display:none}}
+  </style>
 </head>
 <body>
+  <!-- 进站引导（每会话一次） -->
+  <div id="boot" aria-hidden="true">
+    <div class="s-logo">SALARY CALC</div>
+    <div class="s-num"><span class="yen">¥</span>__.___</div>
+    <div class="s-sub">TAX · INSURANCE · TAKEHOME</div>
+  </div>
+  <script>try{if(sessionStorage.getItem('boot-seen')){var b=document.getElementById('boot');b&&(b.style.display='none')}else{sessionStorage.setItem('boot-seen','1')}}catch(e){}</script>
   <a class="skip-link" href="#main">跳到主要内容</a>
 
   <header class="site-header">
