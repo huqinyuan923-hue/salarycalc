@@ -9,13 +9,20 @@
   <link rel="stylesheet" href="styles.css">
   <style>
     /* 进站动画：薪资结算（每会话一次） */
-    #boot{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#0c1322;font-family:system-ui,sans-serif;animation:scOut .5s ease 1.9s forwards}
-    #boot .s-logo{color:#34d399;font-size:clamp(24px,5vw,42px);font-weight:800;animation:scIn .5s ease both}
-    #boot .s-num{font-family:ui-monospace,Consolas,monospace;font-size:clamp(38px,7vw,64px);font-weight:800;color:#f8fafc;text-shadow:0 0 24px rgba(52,211,153,.5);opacity:0;animation:scIn .4s ease .4s both}
-    #boot .s-num .yen{color:#34d399}
-    #boot .s-sub{color:#94a3b8;font-size:13px;letter-spacing:.12em;opacity:0;animation:scIn .35s ease .9s both}
-    @keyframes scIn{from{opacity:0;transform:translateY(10px)}}
-    @keyframes scOut{to{opacity:0;visibility:hidden;transform:scale(1.03)}}
+    #boot{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:radial-gradient(ellipse 80% 55% at 50% 28%,rgba(52,211,153,.12),transparent),#0c1322;font-family:system-ui,sans-serif;animation:scOut .5s cubic-bezier(.65,0,.35,1) 2.65s forwards}
+    #boot .s-logo{font-size:clamp(24px,5vw,42px);font-weight:800;letter-spacing:.04em;background:linear-gradient(100deg,#34d399,#22d3ee 60%,#a78bfa);-webkit-background-clip:text;background-clip:text;color:transparent;animation:scIn .5s cubic-bezier(.22,1,.36,1) both}
+    #boot .s-compare{display:flex;flex-direction:column;gap:4px;min-width:min(300px,70vw);opacity:0;animation:scIn .4s ease .3s both}
+    #boot .s-line{display:grid;grid-template-columns:44px 1fr;align-items:baseline;gap:14px}
+    #boot .s-k{color:#64748b;font-size:12px;letter-spacing:.22em}
+    #boot .s-num{font-family:ui-monospace,Consolas,monospace;font-size:clamp(22px,4.4vw,34px);font-weight:800;color:#cbd5e1;font-variant-numeric:tabular-nums;justify-self:end;text-align:right}
+    #boot .s-line.net .s-num{font-size:clamp(30px,6vw,52px);color:#f8fafc;text-shadow:0 0 26px rgba(52,211,153,.55)}
+    #boot .s-num .yen{color:#34d399;font-size:.72em;margin-right:2px}
+    #boot .s-bar{width:min(260px,60vw);height:3px;border-radius:999px;overflow:hidden;background:rgba(52,211,153,.16);opacity:0;animation:scIn .3s ease 1.2s both}
+    #boot .s-bar::before{content:'';display:block;height:100%;background:linear-gradient(90deg,#34d399,#22d3ee);transform:scaleX(0);transform-origin:left;animation:scFill 1.2s cubic-bezier(.3,0,.4,1) 1.3s forwards}
+    #boot .s-sub{color:#94a3b8;font-size:13px;letter-spacing:.12em;opacity:0;animation:scIn .35s ease 1.9s both}
+    @keyframes scIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+    @keyframes scFill{to{transform:scaleX(1)}}
+    @keyframes scOut{to{opacity:0;visibility:hidden;transform:scale(1.04)}}
     @media (prefers-reduced-motion:reduce){#boot{display:none}}
   </style>
 </head>
@@ -23,10 +30,30 @@
   <!-- 进站引导（每会话一次） -->
   <div id="boot" aria-hidden="true">
     <div class="s-logo">SALARY CALC</div>
-    <div class="s-num"><span class="yen">¥</span>__.___</div>
-    <div class="s-sub">TAX · INSURANCE · TAKEHOME</div>
+    <div class="s-compare">
+      <div class="s-line"><span class="s-k">税前</span><b class="s-num"><span class="yen">¥</span><span data-count="18000">0</span></b></div>
+      <div class="s-line net"><span class="s-k">税后</span><b class="s-num"><span class="yen">¥</span><span data-count="14276">0</span></b></div>
+    </div>
+    <div class="s-bar"></div>
+    <div class="s-sub">五险一金 · 个税 · 年终奖 — 本地计算</div>
   </div>
-  <script>try{if(sessionStorage.getItem('boot-seen')){var b=document.getElementById('boot');b&&(b.style.display='none')}else{sessionStorage.setItem('boot-seen','1')}}catch(e){}</script>
+  <script>try{
+    if(sessionStorage.getItem('boot-seen')){
+      var b=document.getElementById('boot');b&&(b.style.display='none');
+    }else{
+      sessionStorage.setItem('boot-seen','1');
+      var els=document.querySelectorAll('#boot [data-count]'),dur=1500,delay=300,t0=performance.now();
+      function fmt(n){return n.toLocaleString('en-US')}
+      function tick(now){
+        var p=Math.min(1,Math.max(0,(now-t0-delay)/dur)),e=1-Math.pow(1-p,3);
+        for(var i=0;i<els.length;i++){els[i].textContent=fmt(Math.round(+els[i].getAttribute('data-count')*e))}
+        if(p<1)requestAnimationFrame(tick);
+      }
+      if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches){
+        for(var j=0;j<els.length;j++){els[j].textContent=fmt(+els[j].getAttribute('data-count'))}
+      }else{requestAnimationFrame(tick)}
+    }
+  }catch(e){}</script>
   <a class="skip-link" href="#main">跳到主要内容</a>
 
   <header class="site-header">
